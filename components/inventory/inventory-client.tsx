@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import {
@@ -16,7 +17,6 @@ import {
 } from "@heroui/react";
 import { Plus, RefreshCcw, Search, SquarePen, Trash2 } from "lucide-react";
 
-import { ProductFormModal } from "@/components/inventory/product-form-modal";
 import { useRealtimeRoom } from "@/components/inventory/realtime-room";
 import { PageSectionHeader } from "@/components/shared/page-section-header";
 import type { ProductRow } from "@/lib/types";
@@ -29,14 +29,11 @@ type InventoryPayload = {
   total: number;
 };
 
-const emptyForm = { asin: "", description: "", sku: "", title: "" };
-
 export function InventoryClient() {
+  const router = useRouter();
   const [backendUrl, setBackendUrl] = useState("");
-  const [editing, setEditing] = useState<ProductRow | null>(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [products, setProducts] = useState<ProductRow[]>([]);
@@ -90,26 +87,6 @@ export function InventoryClient() {
 
   const totalPages = Math.max(1, Math.ceil(total / perPage));
 
-  async function saveProduct(values: typeof emptyForm) {
-    const isEditing = Boolean(editing);
-    const response = await fetch(isEditing ? `/api/products/${editing?.id}` : "/api/products", {
-      body: JSON.stringify(values),
-      headers: { "Content-Type": "application/json" },
-      method: isEditing ? "PUT" : "POST",
-    });
-
-    const payload = (await response.json()) as { message?: string };
-
-    if (!response.ok) {
-      setError(payload.message ?? "Product save failed.");
-      return;
-    }
-
-    setIsModalOpen(false);
-    setEditing(null);
-    await loadProducts();
-  }
-
   async function deleteProduct(id: number) {
     const confirmed = window.confirm("Delete this product permanently?");
     if (!confirmed) {
@@ -142,12 +119,7 @@ export function InventoryClient() {
               <RefreshCcw className="size-4" />
               Refresh
             </Button>
-            <Button
-              onPress={() => {
-                setEditing(null);
-                setIsModalOpen(true);
-              }}
-            >
+            <Button onPress={() => router.push("/dashboard/inventory/add")}>
               <Plus className="size-4" />
               Add product
             </Button>
@@ -275,10 +247,11 @@ export function InventoryClient() {
                             <div className="flex justify-end gap-2">
                               <Button
                                 isIconOnly
-                                onPress={() => {
-                                  setEditing(product);
-                                  setIsModalOpen(true);
-                                }}
+                                onPress={() =>
+                                  router.push(
+                                    `/dashboard/inventory/edit/${encodeURIComponent(product.lcsin)}`,
+                                  )
+                                }
                                 size="sm"
                                 variant="tertiary"
                               >
@@ -359,25 +332,6 @@ export function InventoryClient() {
           )}
         </div>
       </Card>
-      <ProductFormModal
-        initialValues={
-          editing
-            ? {
-                asin: editing.asin || "",
-                description: editing.description || "",
-                sku: editing.sku || "",
-                title: editing.title,
-              }
-            : emptyForm
-        }
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setEditing(null);
-        }}
-        key={editing?.id ?? "new"}
-        onSubmit={saveProduct}
-      />
     </div>
   );
 }
