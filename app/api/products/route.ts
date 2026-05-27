@@ -66,6 +66,7 @@ export async function GET(request: NextRequest) {
       page,
       perPage,
       products,
+      productDeleteProtection: settings.product_delete_protection,
       total: countRow?.count ?? 0,
     });
   } catch (error) {

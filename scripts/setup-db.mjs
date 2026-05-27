@@ -33,9 +33,15 @@ async function setup() {
       app_name VARCHAR(150) NOT NULL,
       backend_app_url VARCHAR(255) NOT NULL,
       storage_location_url VARCHAR(500) NOT NULL DEFAULT '',
+      product_delete_protection TINYINT(1) NOT NULL DEFAULT 0,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )
+  `);
+
+  await pool.query(`
+    ALTER TABLE settings
+    ADD COLUMN IF NOT EXISTS product_delete_protection TINYINT(1) NOT NULL DEFAULT 0
   `);
 
   await pool.query(`
@@ -60,9 +66,9 @@ async function setup() {
 
   if (Array.isArray(settingRows) && settingRows.length === 0) {
     await pool.query(
-      `INSERT INTO settings (app_name, backend_app_url, storage_location_url)
-       VALUES (?, ?, ?)`,
-      ["limncreartion-local", backendUrl, ""],
+      `INSERT INTO settings (app_name, backend_app_url, storage_location_url, product_delete_protection)
+       VALUES (?, ?, ?, ?)`,
+      ["limncreartion-local", backendUrl, "", 0],
     );
   }
 

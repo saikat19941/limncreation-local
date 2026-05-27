@@ -56,23 +56,25 @@ export async function PUT(request: Request) {
       if (current.id) {
         await execute(
           `UPDATE settings
-           SET app_name = ?, backend_app_url = ?, storage_location_url = ?
+           SET app_name = ?, backend_app_url = ?, storage_location_url = ?, product_delete_protection = ?
            WHERE id = ?`,
           [
             parsed.data.app_name,
             parsed.data.backend_app_url,
             parsed.data.storage_location_url,
+            parsed.data.product_delete_protection,
             current.id,
           ],
         );
       } else {
         await execute(
-          `INSERT INTO settings (app_name, backend_app_url, storage_location_url)
-           VALUES (?, ?, ?)`,
+          `INSERT INTO settings (app_name, backend_app_url, storage_location_url, product_delete_protection)
+           VALUES (?, ?, ?, ?)`,
           [
             parsed.data.app_name,
             parsed.data.backend_app_url,
             parsed.data.storage_location_url,
+            parsed.data.product_delete_protection,
           ],
         );
       }

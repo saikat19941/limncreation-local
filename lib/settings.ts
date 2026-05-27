@@ -7,13 +7,14 @@ const fallbackSettings: AppSettings = {
   backend_app_url: env.backendUrl,
   created_at: null,
   id: 1,
+  product_delete_protection: false,
   storage_location_url: "",
   updated_at: null,
 };
 
 export async function getAppSettings() {
   const settings = await queryOne<AppSettings>(
-    `SELECT id, app_name, backend_app_url, storage_location_url, created_at, updated_at
+    `SELECT id, app_name, backend_app_url, storage_location_url, product_delete_protection, created_at, updated_at
      FROM settings
      ORDER BY id ASC
      LIMIT 1`,
@@ -23,6 +24,7 @@ export async function getAppSettings() {
     ...fallbackSettings,
     ...settings,
     backend_app_url: settings?.backend_app_url || env.backendUrl,
+    product_delete_protection: Boolean(settings?.product_delete_protection),
   };
 }
 

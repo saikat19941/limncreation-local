@@ -76,6 +76,13 @@ export async function DELETE(_request: Request, context: RouteContext<"/api/prod
       return NextResponse.json({ message: "Product not found." }, { status: 404 });
     }
 
+    if (!settings.product_delete_protection) {
+      return NextResponse.json(
+        { message: "Product delete protection is turned off in settings." },
+        { status: 403 },
+      );
+    }
+
     try {
       await mutateBackendTable({
         id: numericId,

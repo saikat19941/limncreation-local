@@ -27,6 +27,7 @@ type InventoryPayload = {
   page: number;
   perPage: number;
   products: ProductRow[];
+  productDeleteProtection: boolean;
   total: number;
 };
 
@@ -40,6 +41,7 @@ export function InventoryClient() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [products, setProducts] = useState<ProductRow[]>([]);
+  const [productDeleteProtection, setProductDeleteProtection] = useState(false);
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<"created_at" | "lcsin" | "sku" | "title">("created_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -67,6 +69,7 @@ export function InventoryClient() {
 
       setBackendUrl(payload.backendUrl);
       setProducts(payload.products);
+      setProductDeleteProtection(payload.productDeleteProtection);
       setTotal(payload.total);
     } finally {
       setIsLoading(false);
@@ -206,6 +209,9 @@ export function InventoryClient() {
             <Chip color={backendUrl ? "success" : "warning"} variant="soft">
               {backendUrl ? "Realtime connected" : "Realtime waiting"}
             </Chip>
+            <Chip color={productDeleteProtection ? "accent" : "warning"} variant="soft">
+              {productDeleteProtection ? "Delete enabled" : "Delete locked"}
+            </Chip>
           </div>
         </div>
         {error ? <p className="mt-4 text-sm text-danger">{error}</p> : null}
@@ -269,7 +275,17 @@ export function InventoryClient() {
                               </Button>
                               <Button
                                 isIconOnly
-                                onPress={() => setDeleteTarget(product)}
+                                isDisabled={!productDeleteProtection}
+                                onPress={() => {
+                                  if (!productDeleteProtection) {
+                                    setError(
+                                      "Product delete protection is off. Turn it on in settings first.",
+                                    );
+                                    return;
+                                  }
+
+                                  setDeleteTarget(product);
+                                }}
                                 size="sm"
                                 variant="danger-soft"
                               >

@@ -36,6 +36,7 @@ export const forgotPasswordSchema = z
 export const settingsSchema = z.object({
   app_name: z.string().trim().min(2, "App name is required."),
   backend_app_url: z.url("Please enter a valid backend URL.").trim(),
+  product_delete_protection: z.boolean(),
   storage_location_url: z.string().trim().min(1, "Storage location is required."),
 });
 

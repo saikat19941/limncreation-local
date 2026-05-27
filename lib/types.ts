@@ -16,6 +16,7 @@ export interface AppSettings {
   id: number;
   app_name: string;
   backend_app_url: string;
+  product_delete_protection: boolean;
   storage_location_url: string;
   created_at: string | null;
   updated_at: string | null;
