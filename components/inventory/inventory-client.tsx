@@ -10,6 +10,7 @@ import {
   Dropdown,
   Input,
   Label,
+  Modal,
   Pagination,
   Skeleton,
   Spinner,
@@ -32,8 +33,10 @@ type InventoryPayload = {
 export function InventoryClient() {
   const router = useRouter();
   const [backendUrl, setBackendUrl] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<ProductRow | null>(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [products, setProducts] = useState<ProductRow[]>([]);
@@ -87,21 +90,28 @@ export function InventoryClient() {
 
   const totalPages = Math.max(1, Math.ceil(total / perPage));
 
-  async function deleteProduct(id: number) {
-    const confirmed = window.confirm("Delete this product permanently?");
-    if (!confirmed) {
+  async function deleteProduct() {
+    if (!deleteTarget) {
       return;
     }
 
-    const response = await fetch(`/api/products/${id}`, { method: "DELETE" });
-    const payload = (await response.json()) as { message?: string };
+    setIsDeleting(true);
 
-    if (!response.ok) {
-      setError(payload.message ?? "Delete failed.");
-      return;
+    try {
+      const response = await fetch(`/api/products/${deleteTarget.id}`, { method: "DELETE" });
+      const payload = (await response.json()) as { message?: string };
+
+      if (!response.ok) {
+        setError(payload.message ?? "Delete failed.");
+        return;
+      }
+
+      setDeleteTarget(null);
+      setIsLoading(true);
+      await loadProducts();
+    } finally {
+      setIsDeleting(false);
     }
-
-    await loadProducts();
   }
 
   return (
@@ -259,7 +269,7 @@ export function InventoryClient() {
                               </Button>
                               <Button
                                 isIconOnly
-                                onPress={() => void deleteProduct(product.id)}
+                                onPress={() => setDeleteTarget(product)}
                                 size="sm"
                                 variant="danger-soft"
                               >
@@ -332,6 +342,59 @@ export function InventoryClient() {
           )}
         </div>
       </Card>
+      <Modal>
+        <Modal.Backdrop
+          isDismissable={!isDeleting}
+          isOpen={Boolean(deleteTarget)}
+          onOpenChange={(open) => {
+            if (!open && !isDeleting) {
+              setDeleteTarget(null);
+            }
+          }}
+          variant="opaque"
+        >
+          <Modal.Container placement="center" size="md">
+            <Modal.Dialog className="sm:max-w-[460px]">
+              <Modal.CloseTrigger />
+            <Modal.Header className="border-b border-border/70 px-6 py-4">
+              <div className="space-y-1">
+                <Modal.Heading className="text-xl">Delete Product</Modal.Heading>
+                <p className="text-sm text-muted">
+                  This action will permanently remove the selected inventory record.
+                </p>
+              </div>
+            </Modal.Header>
+            <Modal.Body className="space-y-4 px-6 py-5">
+              <div className="rounded-[1.25rem] bg-surface p-4">
+                <p className="text-xs tracking-[0.18em] text-muted uppercase">Selected product</p>
+                <p className="mt-2 text-sm font-medium text-foreground">
+                  {deleteTarget?.title || "Unknown product"}
+                </p>
+                <p className="mt-1 text-sm text-muted">
+                  {deleteTarget?.lcsin ? `LCSIN: ${deleteTarget.lcsin}` : "No LCSIN"}
+                </p>
+              </div>
+              <p className="text-sm leading-7 text-muted">
+                Are you sure you want to continue? This cannot be undone.
+              </p>
+            </Modal.Body>
+            <Modal.Footer className="border-t border-border/70 px-6 py-4">
+              <Button
+                isDisabled={isDeleting}
+                onPress={() => setDeleteTarget(null)}
+                type="button"
+                variant="secondary"
+              >
+                Cancel
+              </Button>
+              <Button isPending={isDeleting} onPress={() => void deleteProduct()} variant="danger">
+                Delete permanently
+              </Button>
+            </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
+      </Modal>
     </div>
   );
 }
