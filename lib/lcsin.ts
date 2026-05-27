@@ -3,16 +3,17 @@ import { randomBytes } from "node:crypto";
 import { queryOne } from "@/lib/db";
 
 const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+const lcsinPrefix = "LC";
 
 function buildCandidate() {
   const bytes = randomBytes(10);
-  let candidate = "";
+  let candidate = lcsinPrefix;
 
   for (const byte of bytes) {
     candidate += charset[byte % charset.length];
   }
 
-  return candidate.slice(0, 10);
+  return candidate.slice(0, 12);
 }
 
 export async function generateUniqueLcsin() {

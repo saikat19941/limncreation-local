@@ -41,7 +41,7 @@ async function setup() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS products (
       id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-      lcsin VARCHAR(10) NOT NULL UNIQUE,
+      lcsin VARCHAR(12) NOT NULL UNIQUE,
       asin VARCHAR(32) NULL,
       sku VARCHAR(120) NULL,
       title VARCHAR(255) NOT NULL,
@@ -49,6 +49,11 @@ async function setup() {
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )
+  `);
+
+  await pool.query(`
+    ALTER TABLE products
+    MODIFY lcsin VARCHAR(12) NOT NULL
   `);
 
   const [settingRows] = await pool.query("SELECT id FROM settings LIMIT 1");
