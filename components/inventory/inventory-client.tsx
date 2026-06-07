@@ -16,7 +16,7 @@ import {
   Spinner,
   Table,
 } from "@heroui/react";
-import { Plus, RefreshCcw, Search, SquarePen, Trash2 } from "lucide-react";
+import { Eye, Plus, RefreshCcw, Search, SquarePen, Trash2 } from "lucide-react";
 
 import { useRealtimeRoom } from "@/components/inventory/realtime-room";
 import { PageSectionHeader } from "@/components/shared/page-section-header";
@@ -261,6 +261,18 @@ export function InventoryClient() {
                           <Table.Cell>{new Date(product.created_at).toLocaleDateString()}</Table.Cell>
                           <Table.Cell>
                             <div className="flex justify-end gap-2">
+                              <Button
+                                isIconOnly
+                                onPress={() =>
+                                  router.push(
+                                    `/dashboard/inventory/view/${encodeURIComponent(product.lcsin)}`,
+                                  )
+                                }
+                                size="sm"
+                                variant="tertiary"
+                              >
+                                <Eye className="size-4" />
+                              </Button>
                               <Button
                                 isIconOnly
                                 onPress={() =>

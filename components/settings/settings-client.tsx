@@ -8,6 +8,8 @@ import {
   Form,
   Input,
   Label,
+  ListBox,
+  Select,
   Skeleton,
   Spinner,
   Switch,
@@ -21,6 +23,10 @@ type SettingsForm = {
   backend_app_url: string;
   product_delete_protection: boolean;
   storage_location_url: string;
+  toast_enabled: boolean;
+  toast_max_visible: number;
+  toast_placement: AppSettings["toast_placement"];
+  toast_timeout_ms: number;
 };
 
 type SettingsTextKey = "app_name" | "backend_app_url" | "storage_location_url";
@@ -41,6 +47,10 @@ export function SettingsClient() {
     backend_app_url: "",
     product_delete_protection: false,
     storage_location_url: "",
+    toast_enabled: true,
+    toast_max_visible: 3,
+    toast_placement: "bottom end",
+    toast_timeout_ms: 5000,
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -61,6 +71,10 @@ export function SettingsClient() {
           backend_app_url: payload.settings.backend_app_url,
           product_delete_protection: payload.settings.product_delete_protection,
           storage_location_url: payload.settings.storage_location_url,
+          toast_enabled: payload.settings.toast_enabled,
+          toast_max_visible: payload.settings.toast_max_visible,
+          toast_placement: payload.settings.toast_placement,
+          toast_timeout_ms: payload.settings.toast_timeout_ms,
         });
         setIsLoading(false);
       }
@@ -160,6 +174,97 @@ export function SettingsClient() {
                   </Switch.Content>
                 </Switch>
               </div>
+              <div className="space-y-4 rounded-[1.5rem] border border-border/70 bg-surface px-4 py-4">
+                <Switch
+                  isSelected={form.toast_enabled}
+                  onChange={(isSelected) =>
+                    setForm((current) => ({
+                      ...current,
+                      toast_enabled: isSelected,
+                    }))
+                  }
+                >
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                  <Switch.Content>
+                    <Label className="text-sm font-medium">Realtime toast notifications</Label>
+                    <p className="text-sm text-muted">
+                      Show HeroUI toast alerts when new workspace notifications arrive.
+                    </p>
+                  </Switch.Content>
+                </Switch>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <Select
+                    fullWidth
+                    onChange={(value) =>
+                      setForm((current) => ({
+                        ...current,
+                        toast_placement: value as AppSettings["toast_placement"],
+                      }))
+                    }
+                    value={form.toast_placement}
+                    variant="secondary"
+                  >
+                    <Label>Toast placement</Label>
+                    <Select.Trigger>
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        {[
+                          "top start",
+                          "top",
+                          "top end",
+                          "bottom start",
+                          "bottom",
+                          "bottom end",
+                        ].map((placement) => (
+                          <ListBox.Item id={placement} key={placement} textValue={placement}>
+                            {placement}
+                            <ListBox.ItemIndicator />
+                          </ListBox.Item>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
+                  <div className="space-y-2">
+                    <Label htmlFor="toast_timeout_ms">Toast timeout ms</Label>
+                    <Input
+                      fullWidth
+                      id="toast_timeout_ms"
+                      min={1000}
+                      max={30000}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          toast_timeout_ms: Number(event.target.value),
+                        }))
+                      }
+                      type="number"
+                      value={String(form.toast_timeout_ms)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="toast_max_visible">Max visible toasts</Label>
+                    <Input
+                      fullWidth
+                      id="toast_max_visible"
+                      min={1}
+                      max={5}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          toast_max_visible: Number(event.target.value),
+                        }))
+                      }
+                      type="number"
+                      value={String(form.toast_max_visible)}
+                    />
+                  </div>
+                </div>
+              </div>
               {error ? <p className="text-sm text-danger">{error}</p> : null}
               {success ? <p className="text-sm text-success">{success}</p> : null}
               <Button isPending={isSaving} type="submit">
@@ -197,6 +302,15 @@ export function SettingsClient() {
                     {settings.product_delete_protection
                       ? "Inventory delete is enabled"
                       : "Inventory delete is locked"}
+                  </p>
+                </div>
+                <div className="rounded-[1.25rem] bg-surface p-4">
+                  <p className="text-xs tracking-[0.18em] text-muted uppercase">Toasts</p>
+                  <p className="mt-2 text-sm text-foreground">
+                    {settings.toast_enabled ? "Enabled" : "Disabled"} at {settings.toast_placement}
+                  </p>
+                  <p className="mt-1 text-xs text-muted">
+                    {settings.toast_timeout_ms}ms timeout, {settings.toast_max_visible} visible
                   </p>
                 </div>
               </>

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { createSession, hashPassword } from "@/lib/auth";
 import { execute, queryOne, queryRows } from "@/lib/db";
+import { createNotification } from "@/lib/notifications";
 import { signupSchema } from "@/lib/validators";
 
 export const runtime = "nodejs";
@@ -42,6 +43,13 @@ export async function POST(request: Request) {
       id: result.insertId,
       name: parsed.data.name,
       role,
+    });
+
+    await createNotification({
+      created_by: result.insertId,
+      message: `${parsed.data.name} joined as ${role}.`,
+      title: "User account created",
+      type: "success",
     });
 
     return NextResponse.json({ success: true });

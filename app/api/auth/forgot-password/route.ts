@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { execute, queryOne } from "@/lib/db";
 import { hashPassword } from "@/lib/auth";
+import { createNotification } from "@/lib/notifications";
 import { forgotPasswordSchema } from "@/lib/validators";
 
 export const runtime = "nodejs";
@@ -30,6 +31,12 @@ export async function POST(request: Request) {
     const hashedPassword = await hashPassword(parsed.data.newPassword);
 
     await execute("UPDATE users SET password = ? WHERE id = ?", [hashedPassword, user.id]);
+    await createNotification({
+      created_by: user.id,
+      message: `Password was reset for ${parsed.data.email}.`,
+      title: "Password reset",
+      type: "warning",
+    });
 
     return NextResponse.json({ message: "Password updated successfully." });
   } catch (error) {

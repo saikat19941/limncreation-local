@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { requireSession } from "@/lib/auth";
 import { execute } from "@/lib/db";
 import { mutateBackendTable } from "@/lib/backend";
+import { actorId, createNotification } from "@/lib/notifications";
 import { getAppSettings } from "@/lib/settings";
 import { settingsSchema } from "@/lib/validators";
 
@@ -56,31 +57,63 @@ export async function PUT(request: Request) {
       if (current.id) {
         await execute(
           `UPDATE settings
-           SET app_name = ?, backend_app_url = ?, storage_location_url = ?, product_delete_protection = ?
+           SET app_name = ?,
+               backend_app_url = ?,
+               storage_location_url = ?,
+               product_delete_protection = ?,
+               toast_enabled = ?,
+               toast_placement = ?,
+               toast_timeout_ms = ?,
+               toast_max_visible = ?
            WHERE id = ?`,
           [
             parsed.data.app_name,
             parsed.data.backend_app_url,
             parsed.data.storage_location_url,
             parsed.data.product_delete_protection,
+            parsed.data.toast_enabled,
+            parsed.data.toast_placement,
+            parsed.data.toast_timeout_ms,
+            parsed.data.toast_max_visible,
             current.id,
           ],
         );
       } else {
         await execute(
-          `INSERT INTO settings (app_name, backend_app_url, storage_location_url, product_delete_protection)
-           VALUES (?, ?, ?, ?)`,
+          `INSERT INTO settings (
+             app_name,
+             backend_app_url,
+             storage_location_url,
+             product_delete_protection,
+             toast_enabled,
+             toast_placement,
+             toast_timeout_ms,
+             toast_max_visible
+           )
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             parsed.data.app_name,
             parsed.data.backend_app_url,
             parsed.data.storage_location_url,
             parsed.data.product_delete_protection,
+            parsed.data.toast_enabled,
+            parsed.data.toast_placement,
+            parsed.data.toast_timeout_ms,
+            parsed.data.toast_max_visible,
           ],
         );
       }
     }
 
     const settings = await getAppSettings();
+    await createNotification({
+      action_url: "/dashboard/settings",
+      created_by: actorId(user),
+      message: "Workspace and toast preferences were saved.",
+      title: "Settings updated",
+      type: "success",
+    });
+
     return NextResponse.json({ settings, success: true });
   } catch (error) {
     console.error(error);

@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/auth";
 import { mutateBackendTable } from "@/lib/backend";
 import { execute, queryOne } from "@/lib/db";
 import { deleteProductFolder } from "@/lib/filesystem";
+import { actorId, createNotification } from "@/lib/notifications";
 import { getAppSettings } from "@/lib/settings";
 import type { ProductRow } from "@/lib/types";
 import { productSchema } from "@/lib/validators";
@@ -31,6 +32,14 @@ export async function PUT(request: Request, context: RouteContext<"/api/products
       title: parsed.data.title,
     };
 
+    const existingProduct = await queryOne<Pick<ProductRow, "lcsin">>(
+      `SELECT lcsin
+       FROM products
+       WHERE id = ?
+       LIMIT 1`,
+      [Number(id)],
+    );
+
     try {
       await mutateBackendTable({
         body: payload,
@@ -47,6 +56,16 @@ export async function PUT(request: Request, context: RouteContext<"/api/products
         [payload.asin, payload.sku, payload.title, payload.description, Number(id)],
       );
     }
+
+    await createNotification({
+      action_url: existingProduct?.lcsin
+        ? `/dashboard/inventory/view/${encodeURIComponent(existingProduct.lcsin)}`
+        : "/dashboard/inventory",
+      created_by: actorId(user),
+      message: `${payload.title} was updated.`,
+      title: "Product updated",
+      type: "info",
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -105,6 +124,14 @@ export async function DELETE(_request: Request, context: RouteContext<"/api/prod
         );
       }
     }
+
+    await createNotification({
+      action_url: "/dashboard/inventory",
+      created_by: actorId(user),
+      message: `Product ${product.lcsin} and its storage folder were removed.`,
+      title: "Product deleted",
+      type: "warning",
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

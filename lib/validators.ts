@@ -38,6 +38,33 @@ export const settingsSchema = z.object({
   backend_app_url: z.url("Please enter a valid backend URL.").trim(),
   product_delete_protection: z.boolean(),
   storage_location_url: z.string().trim().min(1, "Storage location is required."),
+  toast_enabled: z.boolean(),
+  toast_max_visible: z.coerce.number().int().min(1).max(5),
+  toast_placement: z.enum([
+    "top start",
+    "top",
+    "top end",
+    "bottom start",
+    "bottom",
+    "bottom end",
+  ]),
+  toast_timeout_ms: z.coerce.number().int().min(1000).max(30000),
+});
+
+export const notificationQuerySchema = z.object({
+  afterId: z.coerce.number().min(0).default(0),
+  limit: z.coerce.number().min(1).max(50).default(10),
+  unreadOnly: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
+});
+
+export const notificationCreateSchema = z.object({
+  action_url: z.string().trim().nullable().optional(),
+  message: z.string().trim().nullable().optional(),
+  title: z.string().trim().min(2, "Notification title is required."),
+  type: z.enum(["info", "success", "warning", "danger"]).default("info"),
 });
 
 export const productSchema = z.object({

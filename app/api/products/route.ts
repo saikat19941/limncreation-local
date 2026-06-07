@@ -5,6 +5,7 @@ import { mutateBackendTable } from "@/lib/backend";
 import { execute, queryOne, queryRows } from "@/lib/db";
 import { createProductFolder } from "@/lib/filesystem";
 import { generateUniqueLcsin } from "@/lib/lcsin";
+import { actorId, createNotification } from "@/lib/notifications";
 import { getAppSettings } from "@/lib/settings";
 import type { ProductRow } from "@/lib/types";
 import { productQuerySchema, productSchema } from "@/lib/validators";
@@ -122,6 +123,14 @@ export async function POST(request: Request) {
         [payload.lcsin, payload.asin, payload.sku, payload.title, payload.description],
       );
     }
+
+    await createNotification({
+      action_url: `/dashboard/inventory/view/${encodeURIComponent(lcsin)}`,
+      created_by: actorId(user),
+      message: `${payload.title} was added with LCSIN ${lcsin}.`,
+      title: "Product created",
+      type: "success",
+    });
 
     return NextResponse.json({ lcsin, success: true });
   } catch (error) {
